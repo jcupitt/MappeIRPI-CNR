@@ -1,7 +1,16 @@
+/* compile with
+ *
+ * 	g++ -g -Wall main.cpp `pkg-config gdal vips-cpp --cflags --libs`
+ *
+ * run with:
+ *
+ * 	./a.out 20180902_13 20180903_13
+ */
+
 #include <ctime>
 #include <iomanip>
 #include <gdal_priv.h>
-#include <filesystem>
+#include <experimental/filesystem>
 #include <gdal_utils.h>
 #include <iostream>
 #include <vips/vips8>
@@ -12,19 +21,19 @@
  */
 
 using namespace std::string_literals;
-namespace fs = std::filesystem;
+namespace fs = std::experimental::filesystem;
 using namespace std::chrono;
 using namespace vips;
 
 static std::string DIR_FORMAT = "%Y%m%d_%H";
 static std::string DATE_FORMAT = "%Y/%m/%d H%H UTF-0";
-static std::string TEMP_PATH = "TEMP/";
+static std::string TEMP_PATH = "./";
 static std::string PREVISTE = "/cf_psm.tif";
-static std::string BASE_PATH = "/home/giovanni/Desktop/dati/";
-static std::string COLORI = "/home/giovanni/CLionProjects/MappeIRPI-CNR/colors.txt";
-static std::string BACKGROUND = "/home/giovanni/CLionProjects/MappeIRPI-CNR/background.vips";
-static std::string OVERLAY = "/home/giovanni/CLionProjects/MappeIRPI-CNR/overlay.vips";
-static std::string SFMONO = "/usr/share/fonts/OTF/SFMono-Bold.otf";
+static std::string BASE_PATH = "./dati/";
+static std::string COLORI = "colors.txt";
+static std::string BACKGROUND = "background.vips";
+static std::string OVERLAY = "overlay.vips";
+static std::string SFMONO = "/usr/share/fonts/opentype/cantarell/Cantarell-Regular.otf";
 
 /**
  * Converts UTC time string to a tm struct.
@@ -41,13 +50,13 @@ tm toTime(std::stringstream dateTime) {
  * Covert a pair of 4326 coordinates to 3857
  * @param x longitudes
  * @param y latitudes
- */
 void to3857(double *x, double *y) {
     OGRSpatialReference sourceSRS, targetSRS;
     sourceSRS.importFromEPSG(4326);
     targetSRS.importFromEPSG(3857);
     OGRCreateCoordinateTransformation(&sourceSRS, &targetSRS)->Transform(1, x, y);
 }
+ */
 
 
 int main(int argc, char *argv[]) {
