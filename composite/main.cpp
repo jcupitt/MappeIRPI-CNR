@@ -14,6 +14,11 @@ main(int argc, char **argv)
 	if(VIPS_INIT(argv[0]))
 		vips_error_exit(NULL);
 
+	/* Disable te libvips cache -- it won't help and will just burn
+	 * memory.
+	 */
+	vips_cache_set_max(0);
+
 	VImage background = vips::VImage::new_from_file("background.tif"); 
 	VImage overlay = vips::VImage::new_from_file("overlay.png"); 
 	VImage marker = vips::VImage::new_from_file("marker.png"); 
@@ -24,10 +29,14 @@ main(int argc, char **argv)
 		data = data.resize(3, 
 			VImage::option()->set("kernel", VIPS_KERNEL_LINEAR));
 		VImage image = background.composite2(data, VIPS_BLEND_MODE_OVER);
-
 		image = image.composite2(overlay, VIPS_BLEND_MODE_OVER);
 
-		VImage text = VImage::text("Wed 26 Sep 21:42:47 BST 2018", 
+		/* we must make a unique string each time, or libvips will
+		 * cache the result for us
+		 */
+		char str[256];
+		vips_snprintf(str, 256, "Wed 26 Sep 21:42:47 BST 2018 - %d", i);
+		VImage text = VImage::text(str,
 			VImage::option()
 				->set("height", 25)
                                 ->set("width", 945)
@@ -41,28 +50,23 @@ main(int argc, char **argv)
 		 * attach the text image as an alpha channel. We have to tag
 		 * the image as black and white (b-w).
 		 */
-		VImage colour = text.new_from_image({255, 255, 255});
+		VImage colour = text.new_from_image(255);
 		text = colour.bandjoin(text);
 		text = text.copy(VImage::option()
-			->set("interpretation", "srgb"));
-
-		text.write_to_file("text.v");
-		image.write_to_file("image.v");
-
-		image = image.composite2(text, VIPS_BLEND_MODE_OVER);
-
-		image.write_to_file("image2.v");
-
-
-
-		image = image.composite(marker, VIPS_BLEND_MODE_OVER);
-				/*
+			->set("interpretation", "b-w"));
+		image = image.composite2(text, VIPS_BLEND_MODE_OVER,
 			VImage::option()
-				->set("x", "100")
-				->set("y", "200"));
-				 */
+				->set("x", 10)
+				->set("y", 10));
 
-		//image.write_to_file("x.jpg");
+		int marker_x = 100;
+		int marker_y = 200;
+		image = image.composite(marker, VIPS_BLEND_MODE_OVER,
+			VImage::option()
+				->set("x", marker_x - marker.width() / 2)
+				->set("y", marker_y - marker.height()));
+
+		image.write_to_file("x.jpg");
 	}
 
 	return 0;
